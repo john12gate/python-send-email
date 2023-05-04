@@ -1,0 +1,27 @@
+pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
+
+
+from google.oauth2.credentials import Credentials
+
+creds = Credentials.from_authorized_user_file('path/to/client_secret.json', ['https://www.googleapis.com/auth/gmail.send'])
+
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
+message = MIMEMultipart()
+message['to'] = 'recipient@example.com'
+message['subject'] = 'Test Email'
+body = MIMEText('This is a test email.')
+message.attach(body)
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
+import base64
+
+try:
+    service = build('gmail', 'v1', credentials=creds)
+    message = {'raw': base64.urlsafe_b64encode(message.as_bytes()).decode()}
+    send_message = (service.users().messages().send(userId="me", body=message).execute())
+    print(F'sent message to {message["to"]}')
+except HttpError as error:
+    print(F'An error occurred: {error}')
+    send_message = None
